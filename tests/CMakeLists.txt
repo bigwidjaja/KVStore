@@ -19,6 +19,20 @@ kv_unit_test(mpsc_queue_test)
 kv_unit_test(router_test)
 kv_unit_test(reactor_test)
 
+# Integration suite: pytest + redis-py against the real binary, once per backend.
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+  foreach(backend epoll uring)
+    add_test(NAME integration_${backend}
+             COMMAND ${Python3_EXECUTABLE} -m pytest -q -p no:cacheprovider
+                     ${CMAKE_CURRENT_SOURCE_DIR}/integration)
+    set_tests_properties(integration_${backend} PROPERTIES
+      ENVIRONMENT "KV_SERVER_BIN=$<TARGET_FILE:kv_server>;KV_BACKEND=${backend}"
+      TIMEOUT 3600
+      LABELS integration)
+  endforeach()
+endif()
+
 if(KV_BUILD_FUZZERS)
   add_executable(resp_parser_fuzz fuzz/resp_parser_fuzz.cpp)
   target_link_libraries(resp_parser_fuzz PRIVATE kv)
