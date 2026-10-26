@@ -28,15 +28,19 @@ elseif(NOT KV_SANITIZE STREQUAL "")
 endif()
 
 find_package(Threads REQUIRED)
+find_package(absl REQUIRED)
 
 # Everything except main(), so tests and benchmarks can link it.
 add_library(kv STATIC
   src/base/log.cpp
   src/base/strings.cpp
   src/proto/resp_parser.cpp
+  src/proto/reply_builder.cpp
 )
 target_include_directories(kv PUBLIC src)
 target_link_libraries(kv PUBLIC
+  absl::flat_hash_map
+  absl::inlined_vector
   Threads::Threads
 )
 
