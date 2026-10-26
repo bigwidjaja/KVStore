@@ -8,3 +8,11 @@ function(kv_unit_test name)
 endfunction()
 
 kv_unit_test(strings_test)
+kv_unit_test(resp_parser_test)
+
+if(KV_BUILD_FUZZERS)
+  add_executable(resp_parser_fuzz fuzz/resp_parser_fuzz.cpp)
+  target_link_libraries(resp_parser_fuzz PRIVATE kv)
+  target_compile_options(resp_parser_fuzz PRIVATE -fsanitize=fuzzer)
+  target_link_options(resp_parser_fuzz PRIVATE -fsanitize=fuzzer)
+endif()

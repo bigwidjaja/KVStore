@@ -33,6 +33,7 @@ find_package(Threads REQUIRED)
 add_library(kv STATIC
   src/base/log.cpp
   src/base/strings.cpp
+  src/proto/resp_parser.cpp
 )
 target_include_directories(kv PUBLIC src)
 target_link_libraries(kv PUBLIC
