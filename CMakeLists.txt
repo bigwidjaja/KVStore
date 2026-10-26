@@ -47,6 +47,14 @@ add_library(kv STATIC
   src/net/socket_util.cpp
   src/net/epoll_reactor.cpp
   src/net/uring_reactor.cpp
+  src/server/command_table.cpp
+  src/server/config.cpp
+  src/server/connection.cpp
+  src/server/generic_family.cpp
+  src/server/server.cpp
+  src/server/server_family.cpp
+  src/server/string_family.cpp
+  src/server/worker.cpp
 )
 target_include_directories(kv PUBLIC src ${XXHASH_INCLUDE_DIR})
 target_link_libraries(kv PUBLIC
@@ -55,6 +63,9 @@ target_link_libraries(kv PUBLIC
   absl::inlined_vector
   Threads::Threads
 )
+
+add_executable(kv_server src/server/main.cpp)
+target_link_libraries(kv_server PRIVATE kv)
 
 if(KV_BUILD_TESTS)
   enable_testing()
