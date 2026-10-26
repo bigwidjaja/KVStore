@@ -29,6 +29,7 @@ endif()
 
 find_package(Threads REQUIRED)
 find_package(absl REQUIRED)
+find_path(XXHASH_INCLUDE_DIR xxhash.h REQUIRED)
 
 # Everything except main(), so tests and benchmarks can link it.
 add_library(kv STATIC
@@ -36,11 +37,14 @@ add_library(kv STATIC
   src/base/strings.cpp
   src/proto/resp_parser.cpp
   src/proto/reply_builder.cpp
+  src/core/compact_string.cpp
+  src/core/dash_table.cpp
+  src/core/db_slice.cpp
   src/net/reactor.cpp
   src/net/socket_util.cpp
   src/net/epoll_reactor.cpp
 )
-target_include_directories(kv PUBLIC src)
+target_include_directories(kv PUBLIC src ${XXHASH_INCLUDE_DIR})
 target_link_libraries(kv PUBLIC
   absl::flat_hash_map
   absl::inlined_vector
