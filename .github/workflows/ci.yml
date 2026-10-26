@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.preset }} / ${{ matrix.backend }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [debug, tsan]
+        backend: [epoll, uring]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build cmake g++ pkg-config \
+            liburing-dev libxxhash-dev libabsl-dev libgtest-dev libgmock-dev libbenchmark-dev \
+            python3-pytest python3-redis redis-server
+
+      - name: Let TSan map its shadow memory
+        if: matrix.preset == 'tsan'
+        # Recent kernels randomize mmap more than older TSan runtimes can handle.
+        run: sudo sysctl vm.mmap_rnd_bits=28
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }} -DKV_BUILD_BENCH=OFF
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Unit tests
+        # Backend-independent except reactor_test, which covers every backend itself.
+        if: matrix.backend == 'epoll'
+        env:
+          KV_DIFF_OPS: "2000000"
+          KV_QUEUE_STRESS_MSGS: "2000000"
+        run: ctest --preset ${{ matrix.preset }} -L unit -j4
+
+      - name: Integration tests
+        # The server falls back to epoll when the runner blocks io_uring, and the uring
+        # fixtures then skip themselves.
+        env:
+          KV_SERVER_BIN: build/${{ matrix.preset }}/kv_server
+          KV_BACKEND: ${{ matrix.backend }}
+          KV_STRESS_CLIENTS: ${{ matrix.preset == 'tsan' && '300' || '1000' }}
+        run: python3 -m pytest -q -p no:cacheprovider -rs tests/integration
+
+  release:
+    name: release build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build cmake g++ pkg-config \
+            liburing-dev libxxhash-dev libabsl-dev libgtest-dev libgmock-dev libbenchmark-dev
+      - run: cmake --preset release
+      - run: cmake --build --preset release

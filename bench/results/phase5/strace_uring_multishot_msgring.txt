@@ -1,0 +1,13 @@
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 95.40    0.470427          59      7921           io_uring_enter
+  2.82    0.013902          33       417           mprotect
+  0.67    0.003308          32       103           setsockopt
+  0.59    0.002923          28       102           shutdown
+  0.51    0.002514          24       102           close
+  0.01    0.000041          41         1           futex
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.493115          57      8646           total
+
+# commands during trace: 400002
+# syscalls per request: 0.0216

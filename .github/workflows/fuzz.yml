@@ -1,0 +1,36 @@
+name: Fuzz
+
+# Phase 1, step 4: run the RESP parser fuzzer for 10 minutes every week.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  resp-parser:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build cmake clang-18 libclang-rt-18-dev pkg-config \
+            liburing-dev libxxhash-dev libabsl-dev libgtest-dev libgmock-dev
+      - name: Build
+        run: |
+          cmake --preset fuzz -DCMAKE_CXX_COMPILER=clang++-18
+          cmake --build --preset fuzz --target resp_parser_fuzz
+      - name: Fuzz for 10 minutes
+        env:
+          ASAN_OPTIONS: detect_stack_use_after_return=0
+        run: |
+          mkdir -p corpus
+          build/fuzz/tests/resp_parser_fuzz -max_total_time=600 -print_final_stats=1 \
+            -artifact_prefix=crash- corpus tests/fuzz/seeds
+      - name: Upload crashing inputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes
+          path: crash-*

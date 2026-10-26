@@ -1,0 +1,3 @@
+PING
+SET a "b c"
+GET a

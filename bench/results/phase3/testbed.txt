@@ -1,0 +1,15 @@
+date_utc: 2026-10-26T17:57:06Z
+kernel: 6.10.14-linuxkit
+arch: aarch64
+cpu: 0x000
+cpus_online: 8
+mem_gib: 7.7
+container: docker
+governor: unavailable
+compiler: c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+redis_server: Redis server v=7.0.15 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=d064f9f48c901a92
+redis_benchmark: redis-benchmark 7.0.15
+kv_commit: 98c3af9
+kv_dirty: yes
+load_generator: same machine as the server
+growth_latency keys: 10000000; pinned to CPU 0
