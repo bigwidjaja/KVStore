@@ -1,0 +1,14 @@
+build/
+__pycache__/
+.pytest_cache/
+*.pyc
+compile_commands.json
+.cache/
+crash-*
+leak-*
+timeout-*
+tests/fuzz/corpus/
+oom-*
+
+# Planning notes stay local.
+KV Store Project Plan.md
