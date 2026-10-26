@@ -129,12 +129,28 @@ class Reactor {
   virtual void WakeFromAnyThread() = 0;
 };
 
-enum class Backend { kEpoll };
+enum class Backend { kEpoll, kUring };
 
 struct ReactorOptions {
   Backend backend = Backend::kEpoll;
+  // io_uring only.
+  bool multishot_recv = true;  // DC-14: multishot recv over a provided buffer ring.
+  bool msg_ring_wake = true;   // Wake other rings with IORING_OP_MSG_RING instead of eventfd.
+  unsigned ring_entries = 1024;
+  unsigned buf_count = 512;
+  unsigned buf_size = 4096;
 };
 
 std::unique_ptr<Reactor> CreateReactor(const ReactorOptions& options);
+
+// What this kernel's io_uring supports, checked once at startup.
+struct UringSupport {
+  bool usable = false;  // Ring setup with our flags works and the basic opcodes exist.
+  bool msg_ring = false;
+  bool buf_ring = false;
+  std::string why;  // When !usable.
+};
+
+UringSupport ProbeUring();
 
 }  // namespace kv::net

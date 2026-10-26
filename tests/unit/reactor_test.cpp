@@ -1,5 +1,6 @@
 // Runs every reactor configuration through the same checks: timers, cross-thread wakeups, and
-// a stream echo that forces partial writes.
+// a stream echo that forces partial writes. io_uring cases skip themselves when the kernel (or
+// a seccomp profile) blocks io_uring.
 
 #include "net/reactor.h"
 
@@ -27,12 +28,30 @@ struct Variant {
 std::vector<Variant> Variants() {
   ReactorOptions epoll;
   epoll.backend = Backend::kEpoll;
-  return {{"epoll", epoll}};
+  ReactorOptions basic;
+  basic.backend = Backend::kUring;
+  basic.multishot_recv = false;
+  basic.msg_ring_wake = false;
+  ReactorOptions multishot = basic;
+  multishot.multishot_recv = true;
+  multishot.msg_ring_wake = true;
+  multishot.buf_count = 16;  // Few buffers, so the ring runs dry and multishot gets re-armed.
+  return {{"epoll", epoll}, {"uring_basic", basic}, {"uring_multishot", multishot}};
 }
 
 void PrintTo(const Variant& v, std::ostream* os) { *os << v.name; }
 
-class ReactorTest : public ::testing::TestWithParam<Variant> {};
+class ReactorTest : public ::testing::TestWithParam<Variant> {
+ protected:
+  void SetUp() override {
+    if (GetParam().options.backend == Backend::kUring) {
+      UringSupport s = ProbeUring();
+      if (!s.usable) GTEST_SKIP() << "io_uring unavailable: " << s.why;
+      if (GetParam().options.multishot_recv && !s.buf_ring) GTEST_SKIP() << "no buffer rings";
+      if (GetParam().options.msg_ring_wake && !s.msg_ring) GTEST_SKIP() << "no MSG_RING";
+    }
+  }
+};
 
 // Sleeps whenever it can, and stops the loop once `stop` is set.
 class SleepyDelegate : public LoopDelegate {
@@ -85,7 +104,8 @@ TEST_P(ReactorTest, WakeFromAnyThread) {
 }
 
 TEST_P(ReactorTest, WakeRemote) {
-  // Two reactors on two threads; A wakes B from inside A's loop.
+  // Two reactors on two threads; A wakes B from inside A's loop (MSG_RING for the multishot
+  // variant, eventfd otherwise).
   std::unique_ptr<Reactor> a, b;
   std::atomic<int> ready{0};
   SleepyDelegate* db_ptr = nullptr;

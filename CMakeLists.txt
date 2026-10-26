@@ -28,6 +28,8 @@ elseif(NOT KV_SANITIZE STREQUAL "")
 endif()
 
 find_package(Threads REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(URING REQUIRED IMPORTED_TARGET liburing>=2.5)
 find_package(absl REQUIRED)
 find_path(XXHASH_INCLUDE_DIR xxhash.h REQUIRED)
 
@@ -44,9 +46,11 @@ add_library(kv STATIC
   src/net/reactor.cpp
   src/net/socket_util.cpp
   src/net/epoll_reactor.cpp
+  src/net/uring_reactor.cpp
 )
 target_include_directories(kv PUBLIC src ${XXHASH_INCLUDE_DIR})
 target_link_libraries(kv PUBLIC
+  PkgConfig::URING
   absl::flat_hash_map
   absl::inlined_vector
   Threads::Threads
