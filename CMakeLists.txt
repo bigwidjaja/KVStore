@@ -36,6 +36,9 @@ add_library(kv STATIC
   src/base/strings.cpp
   src/proto/resp_parser.cpp
   src/proto/reply_builder.cpp
+  src/net/reactor.cpp
+  src/net/socket_util.cpp
+  src/net/epoll_reactor.cpp
 )
 target_include_directories(kv PUBLIC src)
 target_link_libraries(kv PUBLIC

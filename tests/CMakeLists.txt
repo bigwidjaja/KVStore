@@ -10,6 +10,7 @@ endfunction()
 kv_unit_test(strings_test)
 kv_unit_test(resp_parser_test)
 kv_unit_test(reply_builder_test)
+kv_unit_test(reactor_test)
 
 if(KV_BUILD_FUZZERS)
   add_executable(resp_parser_fuzz fuzz/resp_parser_fuzz.cpp)
