@@ -40,6 +40,7 @@ add_library(kv STATIC
   src/core/compact_string.cpp
   src/core/dash_table.cpp
   src/core/db_slice.cpp
+  src/shard/router.cpp
   src/net/reactor.cpp
   src/net/socket_util.cpp
   src/net/epoll_reactor.cpp
